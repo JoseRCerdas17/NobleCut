@@ -185,40 +185,56 @@ def verificar_recordatorios():
     db: Session = SessionLocal()
     try:
         ahora_cr = datetime.now(CR_TZ)
+        print(f"[SCHEDULER] TICK - Hora CR: {ahora_cr.strftime('%Y-%m-%d %H:%M:%S %Z')}", flush=True)
 
         reservas = db.query(Reserva).filter(Reserva.estado == "pendiente").all()
+        print(f"[SCHEDULER] Reservas pendientes encontradas: {len(reservas)}", flush=True)
 
         for reserva in reservas:
             try:
                 cita_cr = parse_cita_cr(reserva.fecha, reserva.hora)
                 if not cita_cr:
-                    _logger.warning(
-                        "fecha/hora no parseable id=%s fecha=%r hora=%r",
-                        reserva.id,
-                        reserva.fecha,
-                        reserva.hora,
-                    )
+                    print(f"[SCHEDULER] ERROR parse id={reserva.id} fecha={reserva.fecha!r} hora={reserva.hora!r}", flush=True)
                     continue
+
+                seg_rest = (cita_cr - ahora_cr).total_seconds()
+                horas_rest = seg_rest / 3600
+                print(
+                    f"[SCHEDULER] Reserva id={reserva.id} nombre={reserva.nombre!r} "
+                    f"cita={cita_cr.strftime('%Y-%m-%d %H:%M')} "
+                    f"horas_rest={horas_rest:.2f} "
+                    f"dia_prev_env={bool(reserva.recordatorio_dia_previo_enviado)} "
+                    f"1h_env={bool(reserva.recordatorio_1h_enviado)}",
+                    flush=True,
+                )
 
                 if debe_enviar_dia_previo(
                     ahora_cr,
                     cita_cr,
                     bool(reserva.recordatorio_dia_previo_enviado),
                 ):
+                    print(f"[SCHEDULER] Enviando recordatorio dia_previo a {reserva.email}", flush=True)
                     kw = _payload_reserva(reserva)
                     if enviar_recordatorio(**kw, tipo="dia_previo"):
                         reserva.recordatorio_dia_previo_enviado = True
                         db.commit()
+                        print(f"[SCHEDULER] dia_previo enviado OK id={reserva.id}", flush=True)
+                    else:
+                        print(f"[SCHEDULER] FALLO enviando dia_previo id={reserva.id}", flush=True)
 
                 if debe_enviar_1h(
                     ahora_cr,
                     cita_cr,
                     bool(reserva.recordatorio_1h_enviado),
                 ):
+                    print(f"[SCHEDULER] Enviando recordatorio 1h a {reserva.email}", flush=True)
                     kw = _payload_reserva(reserva)
                     if enviar_recordatorio(**kw, tipo="1h"):
                         reserva.recordatorio_1h_enviado = True
                         db.commit()
+                        print(f"[SCHEDULER] 1h enviado OK id={reserva.id}", flush=True)
+                    else:
+                        print(f"[SCHEDULER] FALLO enviando 1h id={reserva.id}", flush=True)
 
             except Exception:
                 db.rollback()
