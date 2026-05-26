@@ -96,6 +96,13 @@ export default function Admin() {
     setMontoDolares("");
   }, [modalReserva]);
 
+  useEffect(() => {
+    if (!modalReserva || !metodoPago) return;
+    if (metodoPago === "sinpe" || metodoPago === "efectivo") {
+      setMontoPagoMetodo(modalReserva.precio);
+    }
+  }, [metodoPago, modalReserva]);
+
 
   useEffect(() => {
     fetch("https://api.exchangerate-api.com/v4/latest/USD")
