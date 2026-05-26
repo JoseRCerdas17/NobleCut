@@ -5,6 +5,7 @@ from typing import Optional
 
 import resend
 from apscheduler.schedulers.background import BackgroundScheduler
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from database.connection import SessionLocal
@@ -187,7 +188,13 @@ def verificar_recordatorios():
         ahora_cr = datetime.now(CR_TZ)
         print(f"[SCHEDULER] TICK - Hora CR: {ahora_cr.strftime('%Y-%m-%d %H:%M:%S %Z')}", flush=True)
 
-        reservas = db.query(Reserva).filter(Reserva.estado == "pendiente").all()
+        reservas = db.query(Reserva).filter(
+            Reserva.estado == "pendiente",
+            or_(
+                Reserva.recordatorio_dia_previo_enviado == False,
+                Reserva.recordatorio_1h_enviado == False,
+            ),
+        ).all()
         print(f"[SCHEDULER] Reservas pendientes encontradas: {len(reservas)}", flush=True)
 
         for reserva in reservas:
