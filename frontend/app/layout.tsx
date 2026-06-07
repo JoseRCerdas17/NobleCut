@@ -1,8 +1,11 @@
+"use client";
+
 import type { Metadata } from "next";
 import { Montserrat, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import WhatsAppButton from "./components/ui/WhatsAppButton";
 import LocationButton from "./components/ui/LocationButton";
+import { usePathname } from "next/navigation";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -14,25 +17,16 @@ const playfair = Playfair_Display({
   variable: "--font-serif",
 });
 
-export const metadata: Metadata = {
-  title: "Visionary Studio Barber Shop",
-  description: "Barbería premium en Liberia, Guanacaste, Costa Rica.",
-  icons: {
-    icon: [
-      { url: "/favicon-32x32.png", sizes: "32x32" },
-      { url: "/favicon-16x16.png", sizes: "16x16" },
-    ],
-    apple: "/apple-touch-icon.png",
-  },
-};
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const esAdmin = pathname?.startsWith("/admin") || pathname?.startsWith("/login");
+
   return (
     <html lang="es">
       <body className={`${montserrat.variable} ${playfair.variable} ${montserrat.className} bg-dark text-white antialiased`}>
         {children}
-        <LocationButton />
-        <WhatsAppButton />
+        {!esAdmin && <LocationButton />}
+        {!esAdmin && <WhatsAppButton />}
       </body>
     </html>
   );

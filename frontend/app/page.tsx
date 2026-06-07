@@ -19,3 +19,16 @@ export default function Home() {
     </main>
   );
 }
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Visionary Studio Barber Shop",
+  description: "Barbería premium en Liberia, Guanacaste, Costa Rica.",
+  icons: {
+    icon: [
+      { url: "/favicon-32x32.png", sizes: "32x32" },
+      { url: "/favicon-16x16.png", sizes: "16x16" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
+};
