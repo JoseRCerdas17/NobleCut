@@ -1148,22 +1148,24 @@ export default function Admin() {
                   {reserva.metodo_pago && <p className="text-gray-600 text-xs capitalize">Pago: {formatPagoDetalle(reserva)}</p>}
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className={`text-xs px-3 py-1 rounded-full font-bold ${reserva.estado === "pendiente" ? "bg-gold text-black" : "bg-green-900 text-green-300"}`}>
-                  {reserva.estado}
-                </span>
-                <a href={`https://wa.me/506${reserva.telefono.replace(/[^0-9]/g, "")}`} target="_blank" className="text-xs px-3 py-1 rounded-full border border-green-700 text-green-400 hover:bg-green-900 transition-all">
-                  WA
-                </a>
-                {reserva.estado === "pendiente" && (
-                  <button onClick={() => setModalReserva(reserva)} className="text-xs px-3 py-1 rounded-full border border-green-700 text-green-400 hover:bg-green-900 transition-all">
-                    ✓
-                  </button>
-                )}
-                <button onClick={() => cancelarReserva(reserva.id)} className="text-xs px-3 py-1 rounded-full border border-red-800 text-red-400 hover:bg-red-900 transition-all">
-                  ✕
-                </button>
-              </div>
+              <div className="flex flex-col items-end gap-1 shrink-0">
+  <span className={`text-xs px-2 py-1 rounded-full font-bold ${reserva.estado === "pendiente" ? "bg-gold text-black" : "bg-green-900 text-green-300"}`}>
+    {reserva.estado}
+  </span>
+  <div className="flex gap-1">
+    <a href={`https://wa.me/506${reserva.telefono.replace(/[^0-9]/g, "")}`} target="_blank" className="text-xs px-2 py-1 rounded-full border border-green-700 text-green-400 hover:bg-green-900 transition-all">
+      WA
+    </a>
+    {reserva.estado === "pendiente" && (
+      <button onClick={() => setModalReserva(reserva)} className="text-xs px-2 py-1 rounded-full border border-green-700 text-green-400 hover:bg-green-900 transition-all">
+        ✓
+      </button>
+    )}
+    <button onClick={() => cancelarReserva(reserva.id)} className="text-xs px-2 py-1 rounded-full border border-red-800 text-red-400 hover:bg-red-900 transition-all">
+      ✕
+    </button>
+  </div>
+</div>
             </div>
           ))}
         {reservasDelDia.length === 0 && (
