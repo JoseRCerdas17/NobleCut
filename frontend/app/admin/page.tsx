@@ -63,7 +63,7 @@ export default function Admin() {
   const [barberoBloqueoId, setBarberoBloqueoId] = useState(BARBEROS[0].id);
   const [usuarioInfo, setUsuarioInfo] = useState<{ username: string; rol: string; barbero: string | null } | null>(null);
   // Initialize from localStorage immediately — prevents stale default causing wrong data load on first render
-  const [perfilActual, setPerfilActual] = useState<string>(() => localStorage.getItem("perfil_actual") || "todos");
+  const [perfilActual, setPerfilActual] = useState<string>("todos");
 
   const barberoBloqueo = getBarbero(barberoBloqueoId);
   const horariosBarbero = getHorariosBarbero(barberoBloqueoId);
