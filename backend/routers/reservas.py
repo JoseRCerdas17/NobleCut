@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from database.connection import get_db
 from models.reserva import Reserva
 from pydantic import BaseModel
-from routers.auth import get_admin_actual
+from routers.auth import get_admin_actual, get_usuario_actual, TokenData
 
 DIAS_RETENCION_CANCELADAS = 7
 
@@ -44,13 +44,14 @@ class ReservaResponse(BaseModel):
 class BloqueoHorarioCreate(BaseModel):
     fecha: str
     hora: str
+    barbero: str
 
 @router.post("/", response_model=ReservaResponse)
 def crear_reserva(reserva: ReservaCreate, db: Session = Depends(get_db)):
-    # Verificar si ya existe una reserva en esa fecha y hora
     reserva_existente = db.query(Reserva).filter(
         Reserva.fecha == reserva.fecha,
         Reserva.hora == reserva.hora,
+        Reserva.barbero == reserva.barbero,
         Reserva.estado != "cancelada"
     ).first()
     
@@ -66,28 +67,40 @@ def crear_reserva(reserva: ReservaCreate, db: Session = Depends(get_db)):
     db.refresh(nueva_reserva)
     try:
         enviar_confirmacion_cliente(
-    nombre=reserva.nombre,
-    email=reserva.email,
-    servicio=reserva.servicio,
-    precio=reserva.precio,
-    fecha=reserva.fecha,
-    hora=reserva.hora,
-    reserva_id=nueva_reserva.id
-
-)
+            nombre=reserva.nombre,
+            email=reserva.email,
+            servicio=reserva.servicio,
+            precio=reserva.precio,
+            fecha=reserva.fecha,
+            hora=reserva.hora,
+            barbero=reserva.barbero,
+            reserva_id=nueva_reserva.id,
+        )
     except Exception:
         logger.exception("Error enviando correos para reserva id=%s", nueva_reserva.id)
 
     return nueva_reserva
 
 @router.get("/")
-def obtener_reservas(db: Session = Depends(get_db)):
-    return db.query(Reserva).all()
+def obtener_reservas(
+    barbero: str | None = Query(None),
+    _: TokenData = Depends(get_usuario_actual),
+    db: Session = Depends(get_db),
+):
+    query = db.query(Reserva)
+    if barbero:
+        query = query.filter(Reserva.barbero == barbero)
+    return query.all()
 
 @router.get("/ocupados")
-def obtener_horarios_ocupados(fecha: str, db: Session = Depends(get_db)):
+def obtener_horarios_ocupados(
+    fecha: str,
+    barbero: str = Query(...),
+    db: Session = Depends(get_db),
+):
     reservas = db.query(Reserva).filter(
         Reserva.fecha == fecha,
+        Reserva.barbero == barbero,
         Reserva.estado != "cancelada"
     ).all()
     return [r.hora for r in reservas]
@@ -97,11 +110,14 @@ def obtener_horarios_ocupados(fecha: str, db: Session = Depends(get_db)):
 def bloquear_horario(
     bloqueo: BloqueoHorarioCreate,
     db: Session = Depends(get_db),
-    _: str = Depends(get_admin_actual),
+    usuario: TokenData = Depends(get_usuario_actual),
 ):
+    if usuario.rol != "admin" and usuario.barbero != bloqueo.barbero:
+        raise HTTPException(status_code=403, detail="Solo puedes bloquear horarios de tu propio Barbero")
     reserva_existente = db.query(Reserva).filter(
         Reserva.fecha == bloqueo.fecha,
         Reserva.hora == bloqueo.hora,
+        Reserva.barbero == bloqueo.barbero,
         Reserva.estado != "cancelada",
     ).first()
 
@@ -115,7 +131,7 @@ def bloquear_horario(
         nombre="Horario bloqueado",
         telefono="-",
         email="admin@visionary.local",
-        barbero="Alonso Lobo",
+        barbero=bloqueo.barbero,
         servicio="Horario bloqueado por admin",
         precio="₡0",
         fecha=bloqueo.fecha,
@@ -133,12 +149,16 @@ def bloquear_horario(
 def desbloquear_horario(
     fecha: str = Query(...),
     hora: str = Query(...),
+    barbero: str = Query(...),
     db: Session = Depends(get_db),
-    _: str = Depends(get_admin_actual),
+    usuario: TokenData = Depends(get_usuario_actual),
 ):
+    if usuario.rol != "admin" and usuario.barbero != barbero:
+        raise HTTPException(status_code=403, detail="Solo puedes desbloquear horarios de tu propio Barbero")
     bloqueo = db.query(Reserva).filter(
         Reserva.fecha == fecha,
         Reserva.hora == hora,
+        Reserva.barbero == barbero,
         Reserva.estado == "bloqueado",
     ).first()
     if not bloqueo:

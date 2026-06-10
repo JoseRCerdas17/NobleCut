@@ -35,6 +35,7 @@ def enviar_recordatorio(
     precio: str,
     fecha: str,
     hora: str,
+    barbero: str,
     tipo: str,
     reserva_id: int,
 ) -> bool:
@@ -96,6 +97,10 @@ def enviar_recordatorio(
         <tr style="border-bottom:1px solid #2A2A2A;">
           <td style="color:#666;padding:12px 0;font-size:14px;">Hora</td>
           <td style="color:#fff;padding:12px 0;font-size:14px;font-weight:bold;text-align:right;">{hora}</td>
+        </tr>
+        <tr style="border-bottom:1px solid #2A2A2A;">
+          <td style="color:#666;padding:12px 0;font-size:14px;">Barbero</td>
+          <td style="color:#fff;padding:12px 0;font-size:14px;font-weight:bold;text-align:right;">{barbero}</td>
         </tr>
         <tr>
           <td style="color:#666;padding:12px 0;font-size:14px;">Total</td>
@@ -177,6 +182,7 @@ def _payload_reserva(r: Reserva):
         "precio": r.precio,
         "fecha": r.fecha,
         "hora": r.hora,
+        "barbero": r.barbero,
         "reserva_id": r.id,
     }
 

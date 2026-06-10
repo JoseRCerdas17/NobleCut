@@ -6,10 +6,7 @@ import Calendar from "react-calendar";
 
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
-
-const barberos = [
-  { id: 1, nombre: "Alonso Lobo", especialidad: "Owner & Master Barber", iniciales: "AL" },
-];
+import { BARBEROS, getBarbero, getHorariosBarbero } from "../../lib/barberos";
 
 const servicios = [
   { id: 1, nombre: "Corte de Cabello", precio: "₡4,000", duracion: "30 min" },
@@ -18,13 +15,7 @@ const servicios = [
   { id: 4, nombre: "Cejas", precio: "₡1,000", duracion: "5 min" },
 ];
 
-const horarios = [
-  "8:30 AM", "9:00 AM", "9:30 AM", "10:00 AM", "10:30 AM",
-  "1:00 PM", "1:30 PM", "2:00 PM", "3:00 PM", "3:30 PM",
- "4:30 PM", "5:00 PM", "5:30 PM", "6:00 PM", "6:30 PM"
-];
-
-const pasos = [ "Servicio", "Fecha y Hora", "Confirmar"];
+const pasos = ["Barbero", "Servicio", "Fecha y Hora", "Confirmar"];
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 function startOfDay(date: Date) {
@@ -45,19 +36,25 @@ function setStoredValue(key: string, value: string) {
 
 export default function Reservar() {
   const [paso, setPaso] = useState(0);
-  const [barberoSeleccionado] = useState<number>(1);
+  const [barberoSeleccionado, setBarberoSeleccionado] = useState<number | null>(null);
   const [servicioSeleccionado, setServicioSeleccionado] = useState<number | null>(null);
   const [fechaSeleccionada, setFechaSeleccionada] = useState<Date | null>(null);
   const [horarioSeleccionado, setHorarioSeleccionado] = useState<string | null>(null);
   const [horariosOcupados, setHorariosOcupados] = useState<string[]>([]);
+
+  const barbero = getBarbero(barberoSeleccionado ?? 0);
+  const horarios = barberoSeleccionado ? getHorariosBarbero(barberoSeleccionado) : [];
+
   useEffect(() => {
-    if (!fechaSeleccionada) return;
+    if (!fechaSeleccionada || !barberoSeleccionado) return;
+    const barberoActual = getBarbero(barberoSeleccionado);
+    if (!barberoActual) return;
     const fechaStr = fechaSeleccionada.toLocaleDateString("es-CR");
-    fetch(`${API}/reservas/ocupados?fecha=${fechaStr}`)
+    fetch(`${API}/reservas/ocupados?fecha=${encodeURIComponent(fechaStr)}&barbero=${encodeURIComponent(barberoActual.nombre)}`)
       .then((res) => res.json())
       .then((data) => setHorariosOcupados(Array.isArray(data) ? data : []))
       .catch(() => setHorariosOcupados([]));
-  }, [fechaSeleccionada]);
+  }, [fechaSeleccionada, barberoSeleccionado]);
   
   const esHorarioPasado = (hora: string) => {
     if (!fechaSeleccionada) return false;
@@ -97,7 +94,6 @@ const router = useRouter();
   };
   const fechaDeshabilitada = (date: Date) => date.getDay() === 0 || estaFueraDeRango(date);
 
-  const barbero = barberos.find((b) => b.id === barberoSeleccionado);
   const servicio = servicios.find((s) => s.id === servicioSeleccionado);
   const confirmarReserva = async () => {
     if (!nombre || !telefono || !email) {
@@ -127,7 +123,7 @@ setStoredValue("cliente_email", email);
         const error = await response.json();
         if (error.detail === "Ya existe una reserva para esa fecha y hora") {
           alert("Ese horario ya está ocupado. Por favor selecciona otro.");
-          setPaso(1);
+          setPaso(2);
         } else {
           alert("Error al crear la reserva, intenta de nuevo");
         }
@@ -209,8 +205,35 @@ setStoredValue("cliente_email", email);
 
               
 
-              {/* Paso 2 - Servicio */}
+              {/* Paso 1 - Barbero */}
               {paso === 0 && (
+                <div>
+                  <h2 className="text-white font-bold text-xl mb-6">Elige tu barbero</h2>
+                  <div className="flex flex-col gap-4">
+                    {BARBEROS.map((b) => (
+                      <button
+                        key={b.id}
+                        onClick={() => {
+                          setBarberoSeleccionado(b.id);
+                          setHorarioSeleccionado(null);
+                        }}
+                        className={`p-4 rounded-lg border text-left transition-all duration-300 flex items-center gap-4 ${barberoSeleccionado === b.id ? "border-gold bg-dark" : "border-dark-border bg-dark hover:border-gold"}`}
+                      >
+                        <div className="w-12 h-12 rounded-full bg-gold flex items-center justify-center shrink-0">
+                          <span className="text-black font-black text-sm">{b.iniciales}</span>
+                        </div>
+                        <div>
+                          <p className="text-white font-bold">{b.nombre}</p>
+                          <p className="text-gray-500 text-xs mt-1">{b.especialidad}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Paso 2 - Servicio */}
+              {paso === 1 && (
                 <div>
                   <h2 className="text-white font-bold text-xl mb-6">Elige un servicio</h2>
                   <div className="flex flex-col gap-4">
@@ -228,7 +251,7 @@ setStoredValue("cliente_email", email);
               )}
 
              {/* Paso 3 - Fecha y hora */}
-             {paso === 1 && (
+             {paso === 2 && (
                 <div>
                   <h2 className="text-white font-bold text-xl mb-6">Elige fecha y hora</h2>
                   <div className="mb-6">
@@ -272,7 +295,7 @@ setStoredValue("cliente_email", email);
               )}
 
               {/* Paso 4 - Confirmar */}
-              {paso === 2 && (
+              {paso === 3 && (
                 <div>
                   <h2 className="text-white font-bold text-xl mb-6">Tus datos</h2>
                   <div className="flex flex-col gap-4">
@@ -299,11 +322,12 @@ setStoredValue("cliente_email", email);
                     Atrás
                   </button>
                 )}
-                {paso < 2 ? (
+                {paso < 3 ? (
                   <button onClick={() => {
-                    if (paso === 0 && !servicioSeleccionado) { alert("Por favor selecciona un servicio"); return; }
-                    if (paso === 1 && !fechaSeleccionada) { alert("Por favor selecciona una fecha"); return; }
-                    if (paso === 1 && !horarioSeleccionado) { alert("Por favor selecciona un horario"); return; }
+                    if (paso === 0 && !barberoSeleccionado) { alert("Por favor selecciona un barbero"); return; }
+                    if (paso === 1 && !servicioSeleccionado) { alert("Por favor selecciona un servicio"); return; }
+                    if (paso === 2 && !fechaSeleccionada) { alert("Por favor selecciona una fecha"); return; }
+                    if (paso === 2 && !horarioSeleccionado) { alert("Por favor selecciona un horario"); return; }
                     setPaso(paso + 1);
                   }} className="btn-gold text-xs uppercase tracking-widest px-6 py-3 ml-auto">
                     Continuar

@@ -23,9 +23,8 @@ def crear_token(data: dict):
 def verificar_token(token: str):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username = payload.get("sub")
-        if username is None:
+        if payload.get("sub") is None:
             return None
-        return username
+        return payload
     except JWTError:
         return None

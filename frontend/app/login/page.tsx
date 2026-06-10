@@ -30,6 +30,14 @@ export default function Login() {
       if (response.ok) {
         const data = await response.json();
         localStorage.setItem("admin_token", data.access_token);
+        const verifyRes = await fetch(`${API}/auth/verificar`, {
+          headers: { Authorization: `Bearer ${data.access_token}` },
+        });
+        if (verifyRes.ok) {
+          const userInfo = await verifyRes.json();
+          localStorage.setItem("usuario_rol", userInfo.rol || "barber");
+          localStorage.setItem("usuario_barbero", userInfo.barbero || "");
+        }
         router.push("/admin");
       } else {
         setError("Usuario o contraseña incorrectos");
@@ -51,7 +59,7 @@ export default function Login() {
             <span className="text-gold font-black text-2xl italic tracking-widest uppercase"> Barber Shop</span>
           </div>
           <p className="text-gray-500 text-xs uppercase tracking-wider mt-2">
-            Panel de Administración
+            Portal del Barbero
           </p>
         </div>
 
@@ -62,7 +70,7 @@ export default function Login() {
             </label>
             <input
               type="text"
-              placeholder="admin"
+              placeholder="tu usuario"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="w-full bg-dark border border-dark-border rounded px-4 py-3 text-white text-sm focus:outline-none focus:border-gold transition-colors"

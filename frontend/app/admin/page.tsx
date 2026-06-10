@@ -3,6 +3,11 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { BARBEROS, getBarbero, getHorariosBarbero } from "../../lib/barberos";
+
+function getBarberoId(nombre: string): number | null {
+  return BARBEROS.find((b) => b.nombre === nombre)?.id ?? null;
+}
 
 interface Reserva {
   id: number;
@@ -34,12 +39,6 @@ const PERIODOS_INGRESOS = [
   { id: "mes", label: "Este mes" },
 ] as const;
 
-const HORARIOS = [
-  "8:30 AM", "9:00 AM", "9:30 AM", "10:00 AM", "10:30 AM",
-  "1:00 PM", "1:30 PM", "2:00 PM", "3:00 PM", "3:30 PM",
-  "4:30 PM", "5:00 PM", "5:30 PM", "6:00 PM", "6:30 PM",
-];
-
 export default function Admin() {
   const [reservas, setReservas] = useState<Reserva[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -61,13 +60,22 @@ export default function Admin() {
   const [fechaCalendarioAdmin, setFechaCalendarioAdmin] = useState<string>("");
   const [mesCalendario, setMesCalendario] = useState(new Date());
   const [tipoCambio, setTipoCambio] = useState<number>(520);
+  const [barberoBloqueoId, setBarberoBloqueoId] = useState(BARBEROS[0].id);
+  const [usuarioInfo, setUsuarioInfo] = useState<{ username: string; rol: string; barbero: string | null } | null>(null);
+  const [perfilActual, setPerfilActual] = useState<string>("todos");
+
+  const barberoBloqueo = getBarbero(barberoBloqueoId);
+  const horariosBarbero = getHorariosBarbero(barberoBloqueoId);
 
   const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-  const cargarReservas = useCallback(async () => {
+  const cargarReservas = useCallback(async (barberoFiltro?: string) => {
     const token = localStorage.getItem("admin_token");
     if (!token) return;
-    const res = await fetch(`${API}/reservas/`, { headers: { Authorization: `Bearer ${token}` } });
+    const url = barberoFiltro && barberoFiltro !== "todos"
+      ? `${API}/reservas/?barbero=${encodeURIComponent(barberoFiltro)}`
+      : `${API}/reservas/`;
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
     const data = await res.json();
     setReservas(Array.isArray(data) ? data : []);
   }, [API]);
@@ -76,7 +84,30 @@ export default function Admin() {
     const token = localStorage.getItem("admin_token");
     if (!token) { router.push("/login"); return; }
     fetch(`${API}/auth/verificar`, { headers: { Authorization: `Bearer ${token}` } })
-      .then((res) => { if (!res.ok) { localStorage.removeItem("admin_token"); router.push("/login"); } });
+      .then((res) => {
+        if (!res.ok) {
+          localStorage.removeItem("admin_token");
+          localStorage.removeItem("usuario_rol");
+          localStorage.removeItem("usuario_barbero");
+          localStorage.removeItem("perfil_actual");
+          router.push("/login");
+          return;
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (data) {
+          setUsuarioInfo(data);
+          if (data.rol === "barber" && data.barbero) {
+            const barberId = getBarberoId(data.barbero);
+            if (barberId !== null) setBarberoBloqueoId(barberId);
+            setPerfilActual(data.barbero);
+          } else {
+            const savedPerfil = localStorage.getItem("perfil_actual");
+            setPerfilActual(savedPerfil || "todos");
+          }
+        }
+      });
   }, [API, router]);
 
   useEffect(() => {
@@ -84,6 +115,21 @@ export default function Admin() {
       .catch(() => undefined)
       .finally(() => setCargando(false));
   }, [cargarReservas]);
+
+  useEffect(() => {
+    if (!usuarioInfo) return;
+    const filtro = perfilActual === "todos" ? undefined : perfilActual;
+    cargarReservas(filtro).catch(() => undefined);
+  }, [perfilActual, usuarioInfo, cargarReservas]);
+
+  // Lock barberoBloqueoId to the barber's own ID — prevents switching for non-admin accounts
+  useEffect(() => {
+    if (!usuarioInfo || usuarioInfo.rol === "admin") return;
+    if (usuarioInfo.barbero) {
+      const id = getBarberoId(usuarioInfo.barbero);
+      if (id !== null) setBarberoBloqueoId(id);
+    }
+  }, [usuarioInfo]);
 
   useEffect(() => {
     if (!modalReserva) return;
@@ -227,7 +273,7 @@ export default function Admin() {
       const res = await fetch(`${API}/reservas/bloqueos`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ fecha: fechaCalendarioAdmin, hora }),
+        body: JSON.stringify({ fecha: fechaCalendarioAdmin, hora, barbero: barberoBloqueo?.nombre ?? "" }),
       });
       if (!res.ok) {
         const error = await res.json().catch(() => null);
@@ -247,7 +293,7 @@ export default function Admin() {
     if (!token) return;
     setProcesandoHorario(hora);
     try {
-      const res = await fetch(`${API}/reservas/bloqueos?fecha=${encodeURIComponent(fechaCalendarioAdmin)}&hora=${encodeURIComponent(hora)}`, {
+      const res = await fetch(`${API}/reservas/bloqueos?fecha=${encodeURIComponent(fechaCalendarioAdmin)}&hora=${encodeURIComponent(hora)}&barbero=${encodeURIComponent(barberoBloqueo?.nombre ?? "")}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -256,7 +302,7 @@ export default function Admin() {
         alert(error?.detail || "No se pudo desbloquear el horario");
         return;
       }
-      setReservas((prev) => prev.filter((r) => !(r.fecha === fechaCalendarioAdmin && r.hora === hora && r.estado === "bloqueado")));
+      setReservas((prev) => prev.filter((r) => !(r.fecha === fechaCalendarioAdmin && r.hora === hora && r.barbero === barberoBloqueo?.nombre && r.estado === "bloqueado")));
     } finally {
       setProcesandoHorario(null);
     }
@@ -266,7 +312,7 @@ export default function Admin() {
     if (!fechaCalendarioAdmin) return;
     const token = localStorage.getItem("admin_token");
     if (!token) return;
-    const horasDisponibles = HORARIOS.filter(
+    const horasDisponibles = horariosBarbero.filter(
       (hora) => !horariosReservadosDelDia.has(hora) && !horariosBloqueadosDelDia.has(hora),
     );
     if (horasDisponibles.length === 0) return;
@@ -277,7 +323,7 @@ export default function Admin() {
           fetch(`${API}/reservas/bloqueos`, {
             method: "POST",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ fecha: fechaCalendarioAdmin, hora }),
+            body: JSON.stringify({ fecha: fechaCalendarioAdmin, hora, barbero: barberoBloqueo?.nombre ?? "" }),
           }),
         ),
       );
@@ -293,13 +339,13 @@ export default function Admin() {
     if (!fechaCalendarioAdmin) return;
     const token = localStorage.getItem("admin_token");
     if (!token) return;
-    const horasBloqueadas = HORARIOS.filter((hora) => horariosBloqueadosDelDia.has(hora));
+    const horasBloqueadas = horariosBarbero.filter((hora) => horariosBloqueadosDelDia.has(hora));
     if (horasBloqueadas.length === 0) return;
     setProcesandoMasivo("desbloquear");
     try {
       await Promise.all(
         horasBloqueadas.map((hora) =>
-          fetch(`${API}/reservas/bloqueos?fecha=${encodeURIComponent(fechaCalendarioAdmin)}&hora=${encodeURIComponent(hora)}`, {
+          fetch(`${API}/reservas/bloqueos?fecha=${encodeURIComponent(fechaCalendarioAdmin)}&hora=${encodeURIComponent(hora)}&barbero=${encodeURIComponent(barberoBloqueo?.nombre ?? "")}`, {
             method: "DELETE",
             headers: { Authorization: `Bearer ${token}` },
           }),
@@ -565,18 +611,68 @@ export default function Admin() {
   const reservasDelDia = reservas.filter((r) => r.fecha === fechaCalendarioAdmin && r.estado !== "cancelada" && r.estado !== "bloqueado");
   const horariosBloqueadosDelDia = new Set(
     reservas
-      .filter((r) => r.fecha === fechaCalendarioAdmin && r.estado === "bloqueado")
+      .filter((r) => r.fecha === fechaCalendarioAdmin && r.estado === "bloqueado" && r.barbero === barberoBloqueo?.nombre)
       .map((r) => r.hora),
   );
   const horariosReservadosDelDia = new Set(
-    reservasDelDia.map((r) => r.hora),
+    reservasDelDia.filter((r) => r.barbero === barberoBloqueo?.nombre).map((r) => r.hora),
   );
-  const horariosDisponiblesParaBloquear = HORARIOS.filter(
+  const horariosDisponiblesParaBloquear = horariosBarbero.filter(
     (hora) => !horariosReservadosDelDia.has(hora) && !horariosBloqueadosDelDia.has(hora),
   );
 
   return (
     <div className="min-h-screen bg-dark">
+
+      {/* Perfil switcher — solo para admins */}
+      {usuarioInfo && usuarioInfo.rol === "admin" && (
+        <div className="bg-dark-card border-b border-dark-border px-4 py-3">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-gray-500 text-xs uppercase tracking-wider">Ver como:</span>
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              {[
+                { id: "todos", label: "Todos" },
+                { id: "Alonso Lobo", label: "Lobo" },
+                { id: "Axel Ruiz", label: "Axel" },
+              ].map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => {
+                    setPerfilActual(p.id);
+                    localStorage.setItem("perfil_actual", p.id);
+                  }}
+                  className={`text-xs uppercase tracking-widest px-4 py-1.5 rounded-full border transition-all duration-300 font-bold ${
+                    perfilActual === p.id
+                      ? "bg-gold text-black border-gold"
+                      : "border-dark-border text-gray-500 hover:border-gold hover:text-gold"
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+            {perfilActual !== "todos" && (
+              <span className="text-gold text-xs uppercase tracking-wider ml-auto">
+                ▼ Mostrando: {perfilActual}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Barra de barbero para cuentas barber */}
+      {usuarioInfo && usuarioInfo.rol === "barber" && usuarioInfo.barbero && (
+        <div className="bg-dark-card border-b border-dark-border px-4 py-3">
+          <div className="max-w-7xl mx-auto flex items-center gap-2">
+            <span className="text-gold font-black text-sm uppercase tracking-widest">
+              {usuarioInfo.barbero}
+            </span>
+            <span className="text-gray-600 text-xs">— Reservas del barbero</span>
+          </div>
+        </div>
+      )}
 
       {/* Modal de pago */}
       {modalReserva && (
@@ -1144,7 +1240,7 @@ export default function Admin() {
                 <p className="text-gold font-bold text-sm w-20 shrink-0">{reserva.hora}</p>
                 <div>
                   <p className="text-white font-bold text-sm">{reserva.nombre}</p>
-                  <p className="text-gray-500 text-xs">{reserva.servicio} · {reserva.precio}</p>
+                  <p className="text-gray-500 text-xs">{reserva.servicio} · {reserva.precio} · {reserva.barbero}</p>
                   {reserva.metodo_pago && <p className="text-gray-600 text-xs capitalize">Pago: {formatPagoDetalle(reserva)}</p>}
                 </div>
               </div>
@@ -1182,6 +1278,17 @@ export default function Admin() {
       <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
         <p className="text-gold font-bold text-sm uppercase tracking-wider">Bloquear / desbloquear horarios</p>
         <div className="flex items-center gap-2 flex-wrap">
+          {usuarioInfo?.rol === "admin" && (
+            <select
+              value={barberoBloqueoId}
+              onChange={(e) => setBarberoBloqueoId(Number(e.target.value))}
+              className="bg-dark border border-dark-border rounded px-3 py-1 text-gray-400 text-xs focus:outline-none focus:border-gold"
+            >
+              {BARBEROS.map((b) => (
+                <option key={b.id} value={b.id}>{b.nombre}</option>
+              ))}
+            </select>
+          )}
           <p className="text-gray-500 text-xs">{horariosBloqueadosDelDia.size} bloqueados</p>
           <button
             onClick={bloquearDiaCompleto}
@@ -1200,7 +1307,7 @@ export default function Admin() {
         </div>
       </div>
       <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
-        {HORARIOS.map((hora) => {
+        {horariosBarbero.map((hora) => {
           const ocupado = horariosReservadosDelDia.has(hora);
           const bloqueado = horariosBloqueadosDelDia.has(hora);
           const cargando = procesandoHorario === hora;

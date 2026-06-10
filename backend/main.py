@@ -8,6 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from database.connection import Base, engine, ensure_reserva_reminder_columns, ensure_cancelada_en_column, SessionLocal
 from models.reserva import Reserva
+from models.usuario import Usuario
+from auth.security import hashear_password
 from recordatorios import iniciar_scheduler, shutdown_scheduler
 from recordatorios_logic import CR_TZ, MIN_SEGUNDOS_ANTES_UNA_HORA, MAX_SEGUNDOS_ANTES_UNA_HORA, parse_cita_cr, debe_enviar_dia_previo, debe_enviar_1h
 from routers import auth, reservas
@@ -25,8 +27,55 @@ ensure_reserva_reminder_columns()
 ensure_cancelada_en_column()
 
 
+def _barberos_from_env():
+    barbers = []
+    # Primary account
+    u1 = os.getenv("ADMIN_USERNAME", "").strip()
+    p1 = os.getenv("ADMIN_PASSWORD", "").strip()
+    is_admin_raw1 = os.getenv("ADMIN_IS_ADMIN", "").strip().lower()
+    if u1 and p1:
+        barbers.append({"username": u1, "password": p1, "is_admin": is_admin_raw1 in ("true", "1", "yes", "on")})
+    # Second account
+    u2 = os.getenv("ADMIN_USERNAME2", "").strip()
+    p2 = os.getenv("ADMIN_PASSWORD2", "").strip()
+    is_admin_raw2 = os.getenv("ADMIN_IS_ADMIN2", "").strip().lower()
+    if u2 and p2:
+        barbers.append({"username": u2, "password": p2, "is_admin": is_admin_raw2 in ("true", "1", "yes", "on")})
+    return barbers
+
+
+def seed_usuarios():
+    barbers = _barberos_from_env()
+    if not barbers:
+        logging.warning("No se encontraron usuarios de barbero en .env — no se crearon cuentas")
+        return
+    db = SessionLocal()
+    try:
+        created = []
+        for b in barbers:
+            existente = db.query(Usuario).filter(Usuario.username == b["username"]).first()
+            if existente:
+                logging.info(f"Usuario '{b['username']}' ya existe, se omite")
+                continue
+            barbero_nombre = "Alonso Lobo" if b["is_admin"] else "Axel Ruiz"
+            usuario = Usuario(
+                username=b["username"],
+                password_hash=hashear_password(b["password"]),
+                rol="admin" if b["is_admin"] else "barber",
+                barbero=barbero_nombre,
+            )
+            db.add(usuario)
+            created.append(b["username"])
+        if created:
+            db.commit()
+            logging.info(f"Usuarios creados: {', '.join(created)}")
+    finally:
+        db.close()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    seed_usuarios()
     scheduler = iniciar_scheduler()
     app.state.reminder_scheduler = scheduler
     try:

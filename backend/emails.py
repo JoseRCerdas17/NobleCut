@@ -3,7 +3,7 @@ import os
 
 resend.api_key = os.getenv("RESEND_API_KEY")
 
-def enviar_confirmacion_cliente(nombre: str, email: str, servicio: str, precio: str, fecha: str, hora: str, reserva_id: int):
+def enviar_confirmacion_cliente(nombre: str, email: str, servicio: str, precio: str, fecha: str, hora: str, barbero: str, reserva_id: int):
     try:
         maps_url = "https://maps.app.goo.gl/zcfrCQAJDv4KLDfb9"
         whatsapp_url = "https://wa.me/50662009558"
@@ -55,7 +55,7 @@ def enviar_confirmacion_cliente(nombre: str, email: str, servicio: str, precio: 
         </tr>
         <tr style="border-bottom:1px solid #2A2A2A;">
           <td style="color:#666;padding:12px 0;font-size:14px;">Barbero</td>
-          <td style="color:#fff;padding:12px 0;font-size:14px;font-weight:bold;text-align:right;">Alonso "Lobo" Lobo</td>
+          <td style="color:#fff;padding:12px 0;font-size:14px;font-weight:bold;text-align:right;">{barbero}</td>
         </tr>
         <tr>
           <td style="color:#666;padding:12px 0;font-size:14px;">Total</td>

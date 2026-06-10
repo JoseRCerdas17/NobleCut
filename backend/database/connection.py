@@ -33,6 +33,8 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
 
+import models.usuario  # noqa: F401 — registers Usuario with Base
+
 
 def ensure_reserva_reminder_columns():
     """Añade columnas de recordatorios en bases existentes (SQLite / Postgres)."""
