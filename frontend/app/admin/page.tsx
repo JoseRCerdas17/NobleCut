@@ -62,7 +62,8 @@ export default function Admin() {
   const [tipoCambio, setTipoCambio] = useState<number>(520);
   const [barberoBloqueoId, setBarberoBloqueoId] = useState(BARBEROS[0].id);
   const [usuarioInfo, setUsuarioInfo] = useState<{ username: string; rol: string; barbero: string | null } | null>(null);
-  const [perfilActual, setPerfilActual] = useState<string>("todos");
+  // Initialize from localStorage immediately — prevents stale default causing wrong data load on first render
+  const [perfilActual, setPerfilActual] = useState<string>(() => localStorage.getItem("perfil_actual") || "todos");
 
   const barberoBloqueo = getBarbero(barberoBloqueoId);
   const horariosBarbero = getHorariosBarbero(barberoBloqueoId);
@@ -102,6 +103,7 @@ export default function Admin() {
             const barberId = getBarberoId(data.barbero);
             if (barberId !== null) setBarberoBloqueoId(barberId);
             setPerfilActual(data.barbero);
+            localStorage.setItem("perfil_actual", data.barbero);
           } else {
             const savedPerfil = localStorage.getItem("perfil_actual");
             setPerfilActual(savedPerfil || "todos");
@@ -262,7 +264,13 @@ export default function Admin() {
     setReservas(reservas.map((r) => r.id === id ? { ...r, estado: "pendiente", cancelada_en: null } : r));
   };
 
-  const cerrarSesion = () => { localStorage.removeItem("admin_token"); router.push("/login"); };
+  const cerrarSesion = () => {
+    localStorage.removeItem("admin_token");
+    localStorage.removeItem("usuario_rol");
+    localStorage.removeItem("usuario_barbero");
+    localStorage.removeItem("perfil_actual");
+    router.push("/login");
+  };
 
   const bloquearHorario = async (hora: string) => {
     if (!fechaCalendarioAdmin) return;
