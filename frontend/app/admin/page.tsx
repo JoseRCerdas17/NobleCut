@@ -335,7 +335,8 @@ export default function Admin() {
           }),
         ),
       );
-      await cargarReservas();
+      const filtro = perfilActual === "todos" ? undefined : perfilActual;
+      await cargarReservas(filtro);
     } catch {
       alert("No se pudo bloquear todo el día");
     } finally {
@@ -359,7 +360,8 @@ export default function Admin() {
           }),
         ),
       );
-      await cargarReservas();
+      const filtroDesbloqueo = perfilActual === "todos" ? undefined : perfilActual;
+      await cargarReservas(filtroDesbloqueo);
     } catch {
       alert("No se pudo desbloquear todo el día");
     } finally {

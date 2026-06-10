@@ -26,7 +26,7 @@ export const BARBEROS: Barbero[] = [
     horarios: [
       "8:30 AM", "9:15 AM", "10:00 AM", "10:45 AM",
       "1:00 PM", "1:45 PM", "2:30 PM", "3:15 PM",
-      "4:00 PM", "4:45 PM", "5:30 PM", "6:15 PM",
+       "4:45 PM", "5:30 PM", "6:15 PM",
     ],
   },
 ];
