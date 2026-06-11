@@ -205,7 +205,7 @@ export default function Equipo() {
             {/* Foto placeholder */}
             <div className="relative w-full aspect-square rounded-xl overflow-hidden border border-dark-border group">
               <Image
-                src="/axel.jpeg"
+                src="/AXEL.jpeg"
                 alt="Axel Ruiz"
                 fill
                 className="object-cover transition-transform duration-500 group-hover:scale-105"
