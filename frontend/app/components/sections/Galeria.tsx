@@ -1,7 +1,7 @@
 export default function Galeria() {
   const imagenesGaleria = [
     { src: "/cliente1.jpeg", alt: "Interior de Visionary Studio" },
-    { src: "/cliente2.jpeg", alt: "Herramientas profesionales" },
+    { src: "/cliente7.jpeg", alt: "Herramientas profesionales" },
     { src: "/cliente6.jpeg", alt: "Resultado de corte" },
     { src: "/cliente4.jpeg", alt: "Experiencia en barberia" },
     { src: "/cliente5.jpeg", alt: "Detalle del espacio" },

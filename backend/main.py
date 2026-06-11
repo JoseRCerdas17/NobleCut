@@ -6,13 +6,14 @@ from datetime import datetime
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
-from database.connection import Base, engine, ensure_reserva_reminder_columns, ensure_cancelada_en_column, SessionLocal
+from database.connection import Base, engine, ensure_reserva_reminder_columns, ensure_cancelada_en_column, ensure_resenas_table, SessionLocal
 from models.reserva import Reserva
 from models.usuario import Usuario
+from models.resena import Resena
 from auth.security import hashear_password
 from recordatorios import iniciar_scheduler, shutdown_scheduler
 from recordatorios_logic import CR_TZ, MIN_SEGUNDOS_ANTES_UNA_HORA, MAX_SEGUNDOS_ANTES_UNA_HORA, parse_cita_cr, debe_enviar_dia_previo, debe_enviar_1h
-from routers import auth, reservas
+from routers import auth, reservas, resenas
 
 logging.basicConfig(
     level=logging.INFO,
@@ -25,6 +26,7 @@ _ENV_REMINDER_OFF = frozenset({"1", "true", "yes", "on"})
 Base.metadata.create_all(bind=engine)
 ensure_reserva_reminder_columns()
 ensure_cancelada_en_column()
+ensure_resenas_table()
 
 
 def _barberos_from_env():
@@ -100,6 +102,7 @@ app.add_middleware(
 
 app.include_router(reservas.router)
 app.include_router(auth.router)
+app.include_router(resenas.router)
 
 
 @app.get("/")

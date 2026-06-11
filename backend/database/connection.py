@@ -34,6 +34,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 import models.usuario  # noqa: F401 — registers Usuario with Base
+import models.resena  # noqa: F401 — registers Resena with Base
 
 
 def ensure_reserva_reminder_columns():
@@ -82,6 +83,35 @@ def ensure_cancelada_en_column():
                     "ALTER TABLE reservas ADD COLUMN IF NOT EXISTS cancelada_en TIMESTAMP"
                 )
             )
+
+
+def ensure_resenas_table():
+    """Crea la tabla resenas si no existe (SQLite / Postgres)."""
+    with engine.begin() as conn:
+        if _is_sqlite_url(DATABASE_URL):
+            existing_tables = conn.execute(text("SELECT name FROM sqlite_master WHERE type='table'")).fetchall()
+            if ("resenas",) not in existing_tables:
+                conn.execute(text(
+                    "CREATE TABLE resenas ("
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                    "nombre VARCHAR NOT NULL, "
+                    "calificacion INTEGER NOT NULL, "
+                    "comentario TEXT NOT NULL, "
+                    "aprobado BOOLEAN DEFAULT 1 NOT NULL, "
+                    "creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+                    ")"
+                ))
+        else:
+            conn.execute(text(
+                "CREATE TABLE IF NOT EXISTS resenas ("
+                "id SERIAL PRIMARY KEY, "
+                "nombre VARCHAR NOT NULL, "
+                "calificacion INTEGER NOT NULL, "
+                "comentario TEXT NOT NULL, "
+                "aprobado BOOLEAN DEFAULT TRUE NOT NULL, "
+                "creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+                ")"
+            ))
 
 
 def get_db():

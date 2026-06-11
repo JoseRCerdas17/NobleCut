@@ -24,11 +24,20 @@ interface Reserva {
   cancelada_en: string | null;
 }
 
+interface Resena {
+  id: number;
+  nombre: string;
+  calificacion: number;
+  comentario: string;
+  creado_en: string;
+}
+
 const VISTAS = [
   { id: "lista", label: "Lista" },
   { id: "calendario", label: "Calendario" },
   { id: "ingresos", label: "Ingresos" },
   { id: "canceladas", label: "Canceladas" },
+  { id: "reseñas", label: "Reseñas" },
 ] as const;
 
 const DIAS_RETENCION_CANCELADAS = 7;
@@ -44,7 +53,7 @@ export default function Admin() {
   const [cargando, setCargando] = useState(true);
   const [filtro, setFiltro] = useState("pendiente");
   const [busqueda, setBusqueda] = useState("");
-  const [vista, setVista] = useState<"lista" | "calendario" | "ingresos" | "canceladas">("lista");
+  const [vista, setVista] = useState<"lista" | "calendario" | "ingresos" | "canceladas" | "reseñas">("lista");
   const [modalReserva, setModalReserva] = useState<Reserva | null>(null);
   const [metodoPago, setMetodoPago] = useState<"sinpe" | "efectivo" | "mixto" | null>(null);
   const [montoPagoMetodo, setMontoPagoMetodo] = useState<string>("");
@@ -64,6 +73,8 @@ export default function Admin() {
   const [usuarioInfo, setUsuarioInfo] = useState<{ username: string; rol: string; barbero: string | null } | null>(null);
   // Initialize from localStorage immediately — prevents stale default causing wrong data load on first render
   const [perfilActual, setPerfilActual] = useState<string>("todos");
+  const [reseñas, setReseñas] = useState<Resena[]>([]);
+  const [cargandoReseñas, setCargandoReseñas] = useState(false);
 
   const barberoBloqueo = getBarbero(barberoBloqueoId);
   const horariosBarbero = getHorariosBarbero(barberoBloqueoId);
@@ -79,6 +90,19 @@ export default function Admin() {
     const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
     const data = await res.json();
     setReservas(Array.isArray(data) ? data : []);
+  }, [API]);
+
+  const cargarReseñas = useCallback(async () => {
+    const token = localStorage.getItem("admin_token");
+    if (!token) return;
+    setCargandoReseñas(true);
+    try {
+      const res = await fetch(`${API}/resenas/todas`, { headers: { Authorization: `Bearer ${token}` } });
+      const data = await res.json();
+      setReseñas(Array.isArray(data) ? data : []);
+    } finally {
+      setCargandoReseñas(false);
+    }
   }, [API]);
 
   useEffect(() => {
@@ -132,6 +156,12 @@ export default function Admin() {
       if (id !== null) setBarberoBloqueoId(id);
     }
   }, [usuarioInfo]);
+
+  useEffect(() => {
+    if (vista === "reseñas") {
+      cargarReseñas().catch(() => undefined);
+    }
+  }, [vista, cargarReseñas]);
 
   useEffect(() => {
     if (!modalReserva) return;
@@ -262,6 +292,16 @@ export default function Admin() {
       headers: { Authorization: `Bearer ${token}` },
     });
     setReservas(reservas.map((r) => r.id === id ? { ...r, estado: "pendiente", cancelada_en: null } : r));
+  };
+
+  const eliminarResena = async (id: number) => {
+    if (!confirm("¿Eliminar esta reseña?")) return;
+    const token = localStorage.getItem("admin_token");
+    await fetch(`${API}/resenas/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setReseñas(reseñas.filter((r) => r.id !== id));
   };
 
   const cerrarSesion = () => {
@@ -1157,6 +1197,58 @@ export default function Admin() {
               </div>
             );
           })()
+
+        ) : vista === "reseñas" ? (
+
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-gray-500 text-xs uppercase tracking-widest">
+                {reseñas.length} reseñ{reseñas.length !== 1 ? "as" : "a"}
+              </p>
+            </div>
+
+            {cargandoReseñas ? (
+              <div className="text-center py-20 bg-dark-card border border-dark-border rounded-xl">
+                <p className="text-gray-500">Cargando...</p>
+              </div>
+            ) : reseñas.length === 0 ? (
+              <div className="text-center py-20 bg-dark-card border border-dark-border rounded-xl">
+                <p className="text-gray-500">No hay reseñas publicadas</p>
+              </div>
+            ) : reseñas.map((r) => (
+              <div key={r.id} className="bg-dark-card border border-dark-border rounded-xl p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-8 h-8 rounded-full bg-gold/20 flex items-center justify-center">
+                        <span className="text-gold font-black text-sm">{r.nombre.charAt(0).toUpperCase()}</span>
+                      </div>
+                      <div>
+                        <p className="text-white font-bold">{r.nombre}</p>
+                        <p className="text-gray-600 text-xs">
+                          {new Date(r.creado_en).toLocaleDateString("es-CR", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                        </p>
+                      </div>
+                      <div className="flex gap-0.5 ml-2">
+                        {[...Array(5)].map((_, i) => (
+                          <svg key={i} className={`w-4 h-4 ${i < r.calificacion ? "text-gold" : "text-dark-border"}`} fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-gray-400 text-sm leading-relaxed">{r.comentario}</p>
+                  </div>
+                  <button
+                    onClick={() => eliminarResena(r.id)}
+                    className="text-red-400 hover:text-red-300 transition-colors text-xs uppercase tracking-widest border border-red-800 rounded-lg px-3 py-2 hover:bg-red-900 shrink-0"
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
 
         ) : (
 
