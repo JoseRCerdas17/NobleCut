@@ -102,46 +102,8 @@ export default function Equipo() {
     <section ref={sectionRef} id="equipo" className="bg-dark section-padding">
       <div className="max-w-7xl mx-auto">
 
-        {/* Section intro */}
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <span className={`h-px w-12 bg-gradient-to-r from-transparent to-gold transition-all duration-500 ${isVisible ? "opacity-100 w-16" : "opacity-0 w-0"}`} />
-            <p className="text-gold text-xs tracking-[4px] uppercase">
-              {isVisible && "Conoce al equipo"}
-            </p>
-            <span className={`h-px w-12 bg-gradient-to-l from-transparent to-gold transition-all duration-500 ${isVisible ? "opacity-100 w-16" : "opacity-0 w-0"}`} />
-          </div>
-          <h2 className="text-white font-black uppercase text-4xl md:text-5xl">
-            {isVisible ? "The Team" : "El Equipo"}
-          </h2>
-          <div className={`mt-4 h-1 w-16 mx-auto bg-gold rounded-full transition-all duration-700 ${isVisible ? "opacity-100 scale-100" : "opacity-0 scale-50"}`} />
-        </div>
-
-        {/* Team photo — FIRST */}
-        <div className="mb-16 relative">
-          <div className="relative w-full aspect-[1/1] md:aspect-[3/1] rounded-xl overflow-hidden border border-dark-border group">
-            <Image
-              src="/equipo.jpeg"
-              alt="Visionary Studio Team"
-              fill
-              className="object-cover transition-transform duration-700 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-dark/60 via-transparent to-transparent" />
-            <div className={`absolute bottom-6 left-6 right-6 flex items-center justify-between transition-all duration-500 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
-              <div>
-                <p className="text-gold text-xs tracking-[3px] uppercase mb-1">
-                  Visionary Studio
-                </p>
-                <p className="text-white font-black uppercase text-xl md:text-2xl tracking-wide">
-                  {isVisible ? "The Dream Team" : "El Equipo"}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Barbers row — 2 columns on desktop, stacked on mobile */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start mb-12">
+        {/* Barbers row — single column centered */}
+        <div className="grid grid-cols-1 md:grid-cols-1 gap-12 items-start mb-12 max-w-2xl mx-auto">
 
           {/* Columna Barbero — Lobo */}
           <div>
@@ -193,64 +155,66 @@ export default function Equipo() {
             </div>
           </div>
 
-          {/* Columna Barbero — Axel */}
-          <div>
-            <p className="text-gold text-xs tracking-[4px] uppercase mb-4">
-              {isVisible && "El Artista"}
-            </p>
-            <p className="text-gray-500 text-sm mb-10 max-w-md leading-relaxed">
-              Especialista en cortes modernos, degradados y diseños. 18 años con pasión por el arte de la barbería.
-            </p>
+          {/* --- AXEL DISABLED (commented out 2026-06-20) --- */}
+          {false && (
+            <div>
+              <p className="text-gold text-xs tracking-[4px] uppercase mb-4">
+                {isVisible && "El Artista"}
+              </p>
+              <p className="text-gray-500 text-sm mb-10 max-w-md leading-relaxed">
+                Especialista en cortes modernos, degradados y diseños. 18 años con pasión por el arte de la barbería.
+              </p>
 
-            {/* Foto placeholder */}
-            <div className="relative w-full aspect-square rounded-xl overflow-hidden border border-dark-border group">
-              <Image
-                src="/AXEL.jpeg"
-                alt="Axel Ruiz"
-                fill
-                className="object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-            </div>
-
-            {/* Nombre y cargo */}
-            <div className="mt-4 mb-4">
-              <h3 className="text-white font-black text-xl mb-1">
-                Axel Ruiz
-              </h3>
-              <p className="text-gold text-xs tracking-wider uppercase">Barbero</p>
-            </div>
-
-            <a href="/reservar" className="btn-gold w-full text-center uppercase tracking-widest text-sm py-4 block mb-6">
-              Reservar con Axel
-            </a>
-
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-3 md:gap-4">
-              <div className="bg-dark-card border border-dark-border rounded-lg p-3 md:p-4 text-center">
-                <p className="text-gold font-black text-base md:text-xl">Fades</p>
-                <p className="text-gray-500 text-[10px] md:text-xs uppercase tracking-wider mt-1">Especialidad</p>
+              {/* Foto placeholder */}
+              <div className="relative w-full aspect-square rounded-xl overflow-hidden border border-dark-border group">
+                <Image
+                  src="/AXEL.jpeg"
+                  alt="Axel Ruiz"
+                  fill
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                />
               </div>
-              <div className="bg-dark-card border border-dark-border rounded-lg p-3 md:p-4 text-center">
-                <p className="text-gold font-black text-base md:text-xl">Diseños</p>
-                <p className="text-gray-500 text-[10px] md:text-xs uppercase tracking-wider mt-1">Arte</p>
+
+              {/* Nombre y cargo */}
+              <div className="mt-4 mb-4">
+                <h3 className="text-white font-black text-xl mb-1">
+                  Axel Ruiz
+                </h3>
+                <p className="text-gold text-xs tracking-wider uppercase">Barbero</p>
               </div>
-              <div className="bg-dark-card border border-dark-border rounded-lg p-3 md:p-4 text-center">
-                <p className="text-gold font-black text-lg md:text-2xl">18</p>
-                <p className="text-gray-500 text-[10px] md:text-xs uppercase tracking-wider mt-1">Años</p>
+
+              <a href="/reservar" className="btn-gold w-full text-center uppercase tracking-widest text-sm py-4 block mb-6">
+                Reservar con Axel
+              </a>
+
+              {/* Stats */}
+              <div className="grid grid-cols-3 gap-3 md:gap-4">
+                <div className="bg-dark-card border border-dark-border rounded-lg p-3 md:p-4 text-center">
+                  <p className="text-gold font-black text-base md:text-xl">Fades</p>
+                  <p className="text-gray-500 text-[10px] md:text-xs uppercase tracking-wider mt-1">Especialidad</p>
+                </div>
+                <div className="bg-dark-card border border-dark-border rounded-lg p-3 md:p-4 text-center">
+                  <p className="text-gold font-black text-base md:text-xl">Diseños</p>
+                  <p className="text-gray-500 text-[10px] md:text-xs uppercase tracking-wider mt-1">Arte</p>
+                </div>
+                <div className="bg-dark-card border border-dark-border rounded-lg p-3 md:p-4 text-center">
+                  <p className="text-gold font-black text-lg md:text-2xl">18</p>
+                  <p className="text-gray-500 text-[10px] md:text-xs uppercase tracking-wider mt-1">Años</p>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
         </div>
 
         {/* Opiniones — full width below both barbers */}
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <span className={`h-px w-12 bg-gradient-to-r from-transparent to-gold transition-all duration-500 ${isVisible ? "opacity-100 w-16" : "opacity-0 w-0"}`} />
+            <span className={`h-px w-12 bg-linear-to-r from-transparent to-gold transition-all duration-500 ${isVisible ? "opacity-100 w-16" : "opacity-0 w-0"}`} />
             <p className="text-gold text-xs tracking-[4px] uppercase text-center">
               {isVisible ? "What They Say" : "Lo que dicen"}
             </p>
-            <span className={`h-px w-12 bg-gradient-to-l from-transparent to-gold transition-all duration-500 ${isVisible ? "opacity-100 w-16" : "opacity-0 w-0"}`} />
+            <span className={`h-px w-12 bg-linear-to-l from-transparent to-gold transition-all duration-500 ${isVisible ? "opacity-100 w-16" : "opacity-0 w-0"}`} />
           </div>
           <h2 className="text-white font-black uppercase text-4xl md:text-5xl mb-8 text-center">
             {isVisible ? "Reviews" : "Voces de Distinción"}

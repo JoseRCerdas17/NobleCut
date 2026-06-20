@@ -15,7 +15,7 @@ const servicios = [
   { id: 4, nombre: "Cejas", precio: "₡1,000", duracion: "5 min" },
 ];
 
-const pasos = ["Barbero", "Servicio", "Fecha y Hora", "Confirmar"];
+const pasos = ["Servicio", "Fecha y Hora", "Confirmar"];
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 function startOfDay(date: Date) {
@@ -35,8 +35,8 @@ function setStoredValue(key: string, value: string) {
 }
 
 export default function Reservar() {
-  const [paso, setPaso] = useState(0);
-  const [barberoSeleccionado, setBarberoSeleccionado] = useState<number | null>(null);
+  const [paso, setPaso] = useState(1);
+  const [barberoSeleccionado, setBarberoSeleccionado] = useState<number | null>(1);
   const [servicioSeleccionado, setServicioSeleccionado] = useState<number | null>(null);
   const [fechaSeleccionada, setFechaSeleccionada] = useState<Date | null>(null);
   const [horarioSeleccionado, setHorarioSeleccionado] = useState<string | null>(null);
@@ -324,7 +324,6 @@ setStoredValue("cliente_email", email);
                 )}
                 {paso < 3 ? (
                   <button onClick={() => {
-                    if (paso === 0 && !barberoSeleccionado) { alert("Por favor selecciona un barbero"); return; }
                     if (paso === 1 && !servicioSeleccionado) { alert("Por favor selecciona un servicio"); return; }
                     if (paso === 2 && !fechaSeleccionada) { alert("Por favor selecciona una fecha"); return; }
                     if (paso === 2 && !horarioSeleccionado) { alert("Por favor selecciona un horario"); return; }

@@ -37,12 +37,13 @@ def _barberos_from_env():
     is_admin_raw1 = os.getenv("ADMIN_IS_ADMIN", "").strip().lower()
     if u1 and p1:
         barbers.append({"username": u1, "password": p1, "is_admin": is_admin_raw1 in ("true", "1", "yes", "on")})
+    # --- AXEL DISABLED (commented out 2026-06-20) ---
     # Second account
-    u2 = os.getenv("ADMIN_USERNAME2", "").strip()
-    p2 = os.getenv("ADMIN_PASSWORD2", "").strip()
-    is_admin_raw2 = os.getenv("ADMIN_IS_ADMIN2", "").strip().lower()
-    if u2 and p2:
-        barbers.append({"username": u2, "password": p2, "is_admin": is_admin_raw2 in ("true", "1", "yes", "on")})
+    # u2 = os.getenv("ADMIN_USERNAME2", "").strip()
+    # p2 = os.getenv("ADMIN_PASSWORD2", "").strip()
+    # is_admin_raw2 = os.getenv("ADMIN_IS_ADMIN2", "").strip().lower()
+    # if u2 and p2:
+    #     barbers.append({"username": u2, "password": p2, "is_admin": is_admin_raw2 in ("true", "1", "yes", "on")})
     return barbers
 
 

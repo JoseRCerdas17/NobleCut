@@ -685,7 +685,8 @@ export default function Admin() {
               {[
                 { id: "todos", label: "Todos" },
                 { id: "Alonso Lobo", label: "Lobo" },
-                { id: "Axel Ruiz", label: "Axel" },
+                // --- AXEL DISABLED (commented out 2026-06-20) ---
+                // { id: "Axel Ruiz", label: "Axel" },
               ].map((p) => (
                 <button
                   key={p.id}
