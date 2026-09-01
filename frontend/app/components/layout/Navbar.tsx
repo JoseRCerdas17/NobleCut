@@ -35,6 +35,7 @@ export default function Navbar() {
             <button onClick={() => scrollToSection("galeria")} className="text-white hover:text-gold transition-colors duration-300 text-sm uppercase tracking-wider">Galería</button>
             <button onClick={() => scrollToSection("equipo")} className="text-white hover:text-gold transition-colors duration-300 text-sm uppercase tracking-wider">Equipo</button>
             <button onClick={() => scrollToSection("contacto")} className="text-white hover:text-gold transition-colors duration-300 text-sm uppercase tracking-wider">Contacto</button>
+            <Link href="/card" className="text-white hover:text-gold transition-colors duration-300 text-sm uppercase tracking-wider">Mi Tarjeta</Link>
             <Link href="/reservar" className="btn-gold text-sm uppercase tracking-wider px-6 py-2">Reservar Cita</Link>
           </div>
 
@@ -55,6 +56,7 @@ export default function Navbar() {
           <button onClick={() => { scrollToSection("galeria"); setIsOpen(false); }} className="text-white hover:text-gold transition-colors py-2 uppercase tracking-wider text-sm text-left">Galería</button>
           <button onClick={() => { scrollToSection("equipo"); setIsOpen(false); }} className="text-white hover:text-gold transition-colors py-2 uppercase tracking-wider text-sm text-left">Equipo</button>
           <button onClick={() => { scrollToSection("contacto"); setIsOpen(false); }} className="text-white hover:text-gold transition-colors py-2 uppercase tracking-wider text-sm text-left">Contacto</button>
+          <Link href="/card" onClick={() => setIsOpen(false)} className="text-white hover:text-gold transition-colors py-2 uppercase tracking-wider text-sm text-left">Mi Tarjeta</Link>
           <Link href="/reservar" onClick={() => setIsOpen(false)} className="btn-gold text-center uppercase tracking-wider text-sm">Reservar Cita</Link>
         </div>
       </div>

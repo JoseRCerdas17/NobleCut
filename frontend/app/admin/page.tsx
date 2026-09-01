@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import QRCode from "react-qr-code";
 import { BARBEROS, getBarbero, getHorariosBarbero } from "../../lib/barberos";
 
 function getBarberoId(nombre: string): number | null {
@@ -31,6 +32,13 @@ interface Resena {
   comentario: string;
   creado_en: string;
 }
+
+type QrData = {
+  token: string;
+  qr_url: string;
+  expira_en: string;
+  segundos_validos: number;
+};
 
 const VISTAS = [
   { id: "lista", label: "Lista" },
@@ -75,11 +83,32 @@ export default function Admin() {
   const [perfilActual, setPerfilActual] = useState<string>("todos");
   const [reseñas, setReseñas] = useState<Resena[]>([]);
   const [cargandoReseñas, setCargandoReseñas] = useState(false);
+  const [modalQrSellos, setModalQrSellos] = useState(false);
+  const [qrSellos, setQrSellos] = useState<QrData | null>(null);
+  const [qrSecondsLeft, setQrSecondsLeft] = useState(0);
+  const [cargandoQrSellos, setCargandoQrSellos] = useState(false);
+  const [errorQrSellos, setErrorQrSellos] = useState("");
 
   const barberoBloqueo = getBarbero(barberoBloqueoId);
   const horariosBarbero = getHorariosBarbero(barberoBloqueoId);
 
   const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+  const cargarQrSellos = useCallback(async () => {
+    setCargandoQrSellos(true);
+    setErrorQrSellos("");
+    try {
+      const response = await fetch(`${API}/stamps/qr`, { cache: "no-store" });
+      if (!response.ok) throw new Error("No se pudo generar el QR");
+      const data: QrData = await response.json();
+      setQrSellos(data);
+      setQrSecondsLeft(data.segundos_validos);
+    } catch {
+      setErrorQrSellos("No se pudo generar el QR. Intenta de nuevo.");
+    } finally {
+      setCargandoQrSellos(false);
+    }
+  }, [API]);
 
   const cargarReservas = useCallback(async (barberoFiltro?: string) => {
     const token = localStorage.getItem("admin_token");
@@ -173,6 +202,26 @@ export default function Admin() {
     setTieneDolares(false);
     setMontoDolares("");
   }, [modalReserva]);
+
+  useEffect(() => {
+    if (modalQrSellos) {
+      cargarQrSellos();
+    }
+  }, [cargarQrSellos, modalQrSellos]);
+
+  useEffect(() => {
+    if (!modalQrSellos || !qrSellos) return;
+    const interval = window.setInterval(() => {
+      setQrSecondsLeft((current) => current <= 0 ? 0 : current - 1);
+    }, 1000);
+    return () => window.clearInterval(interval);
+  }, [modalQrSellos, qrSellos]);
+
+  useEffect(() => {
+    if (modalQrSellos && qrSellos && qrSecondsLeft === 0 && !cargandoQrSellos) {
+      cargarQrSellos();
+    }
+  }, [cargarQrSellos, cargandoQrSellos, modalQrSellos, qrSecondsLeft, qrSellos]);
 
   useEffect(() => {
     if (!modalReserva || !metodoPago) return;
@@ -670,6 +719,8 @@ export default function Admin() {
   const horariosDisponiblesParaBloquear = horariosBarbero.filter(
     (hora) => !horariosReservadosDelDia.has(hora) && !horariosBloqueadosDelDia.has(hora),
   );
+  const qrMinutes = Math.floor(qrSecondsLeft / 60);
+  const qrSeconds = String(qrSecondsLeft % 60).padStart(2, "0");
 
   return (
     <div className="min-h-screen bg-dark">
@@ -894,6 +945,54 @@ export default function Admin() {
         </div>
       )}
 
+      {/* Modal QR Sellos */}
+      {modalQrSellos && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{background: "rgba(0,0,0,0.8)"}}>
+          <div className="bg-dark-card border border-gold rounded-3xl p-6 w-full max-w-md shadow-2xl shadow-black/60">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-gold text-xs font-semibold uppercase tracking-[0.35em]">Visionary Studio</p>
+                <h3 className="text-white font-black text-2xl uppercase tracking-widest mt-3">QR de Sellos</h3>
+                <p className="text-gray-500 text-sm leading-6 mt-2">
+                  Muestra este codigo al cliente. Se renueva automaticamente cada 5 minutos.
+                </p>
+              </div>
+              <button
+                onClick={() => setModalQrSellos(false)}
+                className="border border-dark-border text-gray-500 text-xs uppercase tracking-widest px-3 py-2 rounded-xl hover:border-gold hover:text-gold transition-all"
+                aria-label="Cerrar QR de sellos"
+              >
+                X
+              </button>
+            </div>
+
+            <div className="mt-6 rounded-3xl bg-white p-5">
+              {qrSellos && !cargandoQrSellos ? (
+                <QRCode value={qrSellos.qr_url} className="h-auto w-full" />
+              ) : (
+                <div className="aspect-square animate-pulse rounded-2xl bg-black/10" />
+              )}
+            </div>
+
+            <div className="mt-5 rounded-2xl border border-dark-border bg-dark p-4 text-center">
+              <p className="text-gray-500 text-xs uppercase tracking-[0.25em]">Se renueva en</p>
+              <p className="text-gold font-black text-4xl mt-2">
+                {qrMinutes}:{qrSeconds}
+              </p>
+            </div>
+
+            {errorQrSellos && <p className="mt-4 text-sm text-red-300">{errorQrSellos}</p>}
+
+            <button
+              onClick={cargarQrSellos}
+              className="btn-gold w-full text-sm uppercase tracking-widest py-3 mt-5"
+            >
+              Generar nuevo QR
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="bg-dark-card border-b border-dark-border px-6 py-4 flex items-center justify-between">
         <div>
@@ -902,8 +1001,9 @@ export default function Admin() {
           </h1>
           <p className="text-gray-500 text-xs uppercase tracking-wider mt-1">Panel de Administración</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-3 flex-wrap justify-end">
           <Link href="/" className="btn-outline text-xs uppercase tracking-widest px-4 py-2">Ver Página</Link>
+          <button onClick={() => setModalQrSellos(true)} className="btn-outline text-xs uppercase tracking-widest px-4 py-2">QR Sellos</button>
           <button onClick={cerrarSesion} className="btn-gold text-xs uppercase tracking-widest px-4 py-2">Cerrar Sesión</button>
         </div>
       </div>
