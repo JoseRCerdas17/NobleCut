@@ -33,9 +33,8 @@ class StampCardResponse(BaseModel):
 def _discount_for(total_cortes: int) -> tuple[int, str]:
     if total_cortes == 10:
         return 100, "¡Corte gratis!"
-    if 5 <= total_cortes <= 9:
-        porcentaje = (total_cortes - 4) * 10
-        return porcentaje, f"{porcentaje}% de descuento"
+    if total_cortes == 5:
+        return 50, "50% de descuento"
     return 0, "Precio normal"
 
 
@@ -95,7 +94,10 @@ def canjear_sello(token: str, datos: StampRedeem, db: Session = Depends(get_db))
     if card:
         if nombre and not card.cliente_nombre:
             card.cliente_nombre = nombre
-        card.total_cortes = 1 if card.total_cortes >= 10 else card.total_cortes + 1
+        if card.total_cortes >= 10:
+            card.total_cortes = 1
+        else:
+            card.total_cortes += 1
     else:
         if not nombre:
             raise HTTPException(status_code=400, detail="El nombre es requerido para crear tu tarjeta")
