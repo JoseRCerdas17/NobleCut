@@ -102,8 +102,22 @@ export default function Equipo() {
     <section ref={sectionRef} id="equipo" className="bg-dark section-padding">
       <div className="max-w-7xl mx-auto">
 
-        {/* Barbers row — single column centered */}
-        <div className="grid grid-cols-1 md:grid-cols-1 gap-12 items-start mb-12 max-w-2xl mx-auto">
+        <div className="mb-12">
+          <div className="relative w-full aspect-[3/4] rounded-2xl overflow-hidden border border-gold">
+            <Image
+              src="/barberos5.jpeg"
+              alt="El equipo de Visionary Studio"
+              fill
+              className="object-cover"
+            />
+          </div>
+          <p className="text-gold text-xs tracking-[4px] uppercase text-center mt-4">
+            El equipo de Visionary Studio
+          </p>
+        </div>
+
+        {/* Barbers row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start mb-12">
 
           {/* Columna Barbero — Lobo */}
           <div>
@@ -155,55 +169,53 @@ export default function Equipo() {
             </div>
           </div>
 
-          {/* --- AXEL DISABLED (commented out 2026-06-20) --- */}
-          {false && (
-            <div>
-              <p className="text-gold text-xs tracking-[4px] uppercase mb-4">
-                {isVisible && "El Artista"}
-              </p>
-              <p className="text-gray-500 text-sm mb-10 max-w-md leading-relaxed">
-                Especialista en cortes modernos, degradados y diseños. 18 años con pasión por el arte de la barbería.
-              </p>
+          {/* Columna Barbero — Ian */}
+          <div>
+            <p className="text-gold text-xs tracking-[4px] uppercase mb-4">
+              {isVisible && "Nueva Generación"}
+            </p>
+            <p className="text-gray-500 text-sm mb-10 max-w-md leading-relaxed">
+              Con 18 años y una actitud fresca, Ian combina precisión técnica con un trato amable que hace que cada cliente se sienta como en casa. Su estilo es limpio, moderno y con personalidad — porque un buen corte no solo se ve, se siente.
+            </p>
 
-              {/* Foto placeholder */}
-              <div className="relative w-full aspect-square rounded-xl overflow-hidden border border-dark-border group">
-                <Image
-                  src="/AXEL.jpeg"
-                  alt="Axel Ruiz"
-                  fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
-                />
+            {/* Foto */}
+            <div className="relative w-full aspect-[3/4] rounded-xl overflow-hidden border border-dark-border group">
+              <Image
+                src="/newbarber.jpeg"
+                alt="Ian Bustos Navarrete"
+                fill
+                className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
+              />
+            </div>
+
+            {/* Nombre y cargo */}
+            <div className="mt-4 mb-4">
+              <h3 className="text-white font-black text-xl mb-1">
+                Ian <span className="text-gold">Bustos</span> Navarrete
+              </h3>
+              <p className="text-gold text-xs tracking-wider uppercase">Barbero · Cortes Modernos</p>
+            </div>
+
+            <a href="/reservar" className="btn-gold w-full text-center uppercase tracking-widest text-sm py-4 block mb-6">
+              Reservar con Ian
+            </a>
+
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-3 md:gap-4">
+              <div className="bg-dark-card border border-dark-border rounded-lg p-3 md:p-4 text-center">
+                <p className="text-gold font-black text-lg md:text-2xl">18</p>
+                <p className="text-gray-500 text-[10px] md:text-xs uppercase tracking-wider mt-1">Años</p>
               </div>
-
-              {/* Nombre y cargo */}
-              <div className="mt-4 mb-4">
-                <h3 className="text-white font-black text-xl mb-1">
-                  Axel Ruiz
-                </h3>
-                <p className="text-gold text-xs tracking-wider uppercase">Barbero</p>
+              <div className="bg-dark-card border border-dark-border rounded-lg p-3 md:p-4 text-center">
+                <p className="text-gold font-black text-base md:text-xl">Moderno</p>
+                <p className="text-gray-500 text-[10px] md:text-xs uppercase tracking-wider mt-1">Estilo</p>
               </div>
-
-              <a href="/reservar" className="btn-gold w-full text-center uppercase tracking-widest text-sm py-4 block mb-6">
-                Reservar con Axel
-              </a>
-
-              {/* Stats */}
-              <div className="grid grid-cols-3 gap-3 md:gap-4">
-                <div className="bg-dark-card border border-dark-border rounded-lg p-3 md:p-4 text-center">
-                  <p className="text-gold font-black text-base md:text-xl">Fades</p>
-                  <p className="text-gray-500 text-[10px] md:text-xs uppercase tracking-wider mt-1">Especialidad</p>
-                </div>
-                <div className="bg-dark-card border border-dark-border rounded-lg p-3 md:p-4 text-center">
-                  <p className="text-gold font-black text-base md:text-xl">Diseños</p>
-                  <p className="text-gray-500 text-[10px] md:text-xs uppercase tracking-wider mt-1">Arte</p>
-                </div>
-                <div className="bg-dark-card border border-dark-border rounded-lg p-3 md:p-4 text-center">
-                  <p className="text-gold font-black text-lg md:text-2xl">18</p>
-                  <p className="text-gray-500 text-[10px] md:text-xs uppercase tracking-wider mt-1">Años</p>
-                </div>
+              <div className="bg-dark-card border border-dark-border rounded-lg p-3 md:p-4 text-center">
+                <p className="text-gold font-black text-base md:text-xl">60min</p>
+                <p className="text-gray-500 text-[10px] md:text-xs uppercase tracking-wider mt-1">Citas</p>
               </div>
             </div>
-          )}
+          </div>
 
         </div>
 

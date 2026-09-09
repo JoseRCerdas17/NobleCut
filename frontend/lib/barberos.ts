@@ -18,18 +18,16 @@ export const BARBEROS: Barbero[] = [
       "4:30 PM", "5:00 PM", "5:30 PM", "6:00 PM", "6:30 PM",
     ],
   },
-  // --- AXEL RUIZ DISABLED (commented out 2026-06-20) ---
-  // {
-  //   id: 2,
-  //   nombre: "Axel Ruiz",
-  //   especialidad: "Barbero · Cortes y Diseños",
-  //   iniciales: "AR",
-  //   horarios: [
-  //     "8:30 AM", "9:15 AM", "10:00 AM", "10:45 AM",
-  //     "1:00 PM", "1:45 PM", "2:30 PM", "3:15 PM",
-  //      "4:45 PM", "5:30 PM", "6:15 PM",
-  //   ],
-  // },
+  {
+    id: 2,
+    nombre: "Ian Bustos Navarrete",
+    especialidad: "Cortes modernos y atención al cliente",
+    iniciales: "IB",
+    horarios: [
+      "8:30 AM", "9:30 AM", "10:30 AM",
+      "1:00 PM", "2:00 PM", "3:00 PM", "4:30 PM", "5:30 PM", "6:30 PM",
+    ],
+  },
 ];
 
 export function getBarbero(id: number) {

@@ -10,6 +10,19 @@ function getBarberoId(nombre: string): number | null {
   return BARBEROS.find((b) => b.nombre === nombre)?.id ?? null;
 }
 
+const LOBO_BARBERO = "Alonso Lobo";
+const IAN_BARBERO = "Ian Bustos Navarrete";
+const PERFILES_BARBEROS = [
+  { id: "todos", label: "Todos" },
+  { id: LOBO_BARBERO, label: "Lobo" },
+  { id: IAN_BARBERO, label: "Ian" },
+];
+
+function esCuentaIan(username: string, barbero: string | null) {
+  const normalized = username.trim().toLowerCase();
+  return barbero === IAN_BARBERO || normalized.includes("ian") || normalized === "admin2";
+}
+
 interface Reserva {
   id: number;
   nombre: string;
@@ -152,36 +165,35 @@ export default function Admin() {
       .then((data) => {
         if (data) {
           setUsuarioInfo(data);
-          if (data.rol === "barber" && data.barbero) {
-            const barberId = getBarberoId(data.barbero);
+          const cuentaIan = esCuentaIan(data.username, data.barbero);
+          if (cuentaIan || data.rol === "barber") {
+            const perfilBarbero = cuentaIan ? IAN_BARBERO : data.barbero || IAN_BARBERO;
+            const barberId = getBarberoId(perfilBarbero);
             if (barberId !== null) setBarberoBloqueoId(barberId);
-            setPerfilActual(data.barbero);
-            localStorage.setItem("perfil_actual", data.barbero);
+            setPerfilActual(perfilBarbero);
+            localStorage.setItem("perfil_actual", perfilBarbero);
           } else {
-            const savedPerfil = localStorage.getItem("perfil_actual");
-            setPerfilActual(savedPerfil || "todos");
+            setPerfilActual("todos");
+            localStorage.setItem("perfil_actual", "todos");
           }
         }
       });
   }, [API, router]);
 
   useEffect(() => {
-    cargarReservas()
+    if (!usuarioInfo) return;
+    setCargando(true);
+    const filtro = perfilActual === "todos" ? undefined : perfilActual;
+    cargarReservas(filtro)
       .catch(() => undefined)
       .finally(() => setCargando(false));
-  }, [cargarReservas]);
-
-  useEffect(() => {
-    if (!usuarioInfo) return;
-    const filtro = perfilActual === "todos" ? undefined : perfilActual;
-    cargarReservas(filtro).catch(() => undefined);
   }, [perfilActual, usuarioInfo, cargarReservas]);
 
   // Lock barberoBloqueoId to the barber's own ID — prevents switching for non-admin accounts
   useEffect(() => {
     if (!usuarioInfo || usuarioInfo.rol === "admin") return;
-    if (usuarioInfo.barbero) {
-      const id = getBarberoId(usuarioInfo.barbero);
+    if (usuarioInfo.barbero || usuarioInfo.username) {
+      const id = getBarberoId(usuarioInfo.barbero || IAN_BARBERO);
       if (id !== null) setBarberoBloqueoId(id);
     }
   }, [usuarioInfo]);
@@ -721,24 +733,20 @@ export default function Admin() {
   );
   const qrMinutes = Math.floor(qrSecondsLeft / 60);
   const qrSeconds = String(qrSecondsLeft % 60).padStart(2, "0");
+  const usuarioIan = usuarioInfo ? esCuentaIan(usuarioInfo.username, usuarioInfo.barbero) : false;
 
   return (
     <div className="min-h-screen bg-dark">
 
       {/* Perfil switcher — solo para admins */}
-      {usuarioInfo && usuarioInfo.rol === "admin" && (
+      {usuarioInfo && usuarioInfo.rol === "admin" && !usuarioIan && (
         <div className="bg-dark-card border-b border-dark-border px-4 py-3">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center gap-3">
             <div className="flex items-center gap-2 shrink-0">
               <span className="text-gray-500 text-xs uppercase tracking-wider">Ver como:</span>
             </div>
             <div className="flex gap-2 flex-wrap">
-              {[
-                { id: "todos", label: "Todos" },
-                { id: "Alonso Lobo", label: "Lobo" },
-                // --- AXEL DISABLED (commented out 2026-06-20) ---
-                // { id: "Axel Ruiz", label: "Axel" },
-              ].map((p) => (
+              {PERFILES_BARBEROS.map((p) => (
                 <button
                   key={p.id}
                   onClick={() => {
@@ -765,11 +773,11 @@ export default function Admin() {
       )}
 
       {/* Barra de barbero para cuentas barber */}
-      {usuarioInfo && usuarioInfo.rol === "barber" && usuarioInfo.barbero && (
+      {usuarioInfo && (usuarioInfo.rol === "barber" || usuarioIan) && (
         <div className="bg-dark-card border-b border-dark-border px-4 py-3">
           <div className="max-w-7xl mx-auto flex items-center gap-2">
             <span className="text-gold font-black text-sm uppercase tracking-widest">
-              {usuarioInfo.barbero}
+                {usuarioIan ? IAN_BARBERO : usuarioInfo.barbero}
             </span>
             <span className="text-gray-600 text-xs">— Reservas del barbero</span>
           </div>

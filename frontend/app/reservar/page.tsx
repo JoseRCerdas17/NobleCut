@@ -15,7 +15,7 @@ const servicios = [
   { id: 4, nombre: "Cejas", precio: "₡1,000", duracion: "5 min" },
 ];
 
-const pasos = ["Servicio", "Fecha y Hora", "Confirmar"];
+const pasos = ["Barbero", "Servicio", "Fecha y Hora", "Confirmar"];
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 function startOfDay(date: Date) {
@@ -34,8 +34,15 @@ function setStoredValue(key: string, value: string) {
   localStorage.setItem(key, value);
 }
 
+function getDuracionServicio(nombreBarbero: string | undefined, servicio: { id: number; duracion: string }) {
+  if (nombreBarbero !== "Ian Bustos Navarrete") return servicio.duracion;
+  if (servicio.id === 3) return "30 min";
+  if (servicio.id === 4) return "10 min";
+  return "60 min";
+}
+
 export default function Reservar() {
-  const [paso, setPaso] = useState(1);
+  const [paso, setPaso] = useState(0);
   const [barberoSeleccionado, setBarberoSeleccionado] = useState<number | null>(1);
   const [servicioSeleccionado, setServicioSeleccionado] = useState<number | null>(null);
   const [fechaSeleccionada, setFechaSeleccionada] = useState<Date | null>(null);
@@ -241,7 +248,7 @@ setStoredValue("cliente_email", email);
                       <button key={s.id} onClick={() => setServicioSeleccionado(s.id)} className={`p-4 rounded-lg border text-left transition-all duration-300 flex justify-between items-center ${servicioSeleccionado === s.id ? "border-gold bg-dark" : "border-dark-border bg-dark hover:border-gold"}`}>
                         <div>
                           <p className="text-white font-bold">{s.nombre}</p>
-                          <p className="text-gray-500 text-xs mt-1">{s.duracion}</p>
+                          <p className="text-gray-500 text-xs mt-1">{getDuracionServicio(barbero?.nombre, s)}</p>
                         </div>
                         <span className="text-gold font-black text-lg">{s.precio}</span>
                       </button>
